@@ -22,7 +22,7 @@ CAUSAL_DB = {
 def home():
     run = request.args.get('run')
     if run in CAUSAL_DB:
-        data = CAUSAL_DB # <-- fixed bracket too
+        data = CAUSAL_DB['btc']
         return f"""
 <h1>$TIMEŒ – Time AI Godfather</h1>
 <p><strong>Run: {run.upper()}</strong></p>
