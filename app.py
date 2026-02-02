@@ -23,12 +23,12 @@ def home():
     run = request.args.get('run')
     query = request.args.get('query')
 
-        if run in CAUSAL_DB:
+    if run in CAUSAL_DB:         
         data = CAUSAL_DB 
         return f"""
 <h1>$TIMEŒ – Time AI Godfather</h1>
 <p><strong>Run: {run.upper()}</strong></p>
-<p>{data['prediction']}</p>
+<p>{data }</p>
 <p><em>Strongest branch:</em> {data }</p>
 <hr>
 <p>Try ?run=btc, ?run=me, ?run=elon or ask to build below.</p>
@@ -54,7 +54,18 @@ def home():
     <input type="text" name="query" placeholder="Ask anything" style="width:400px;">
     <button>Go</button>
   </form>
-</body></html>
+</body>
+</html>
     """)
+
+@app.route('/track')
+def track():
+    habit = request.args.get('habit')
+    return f"""
+<h1>🔥 Chain Started: {habit}</h1>
+<p>Day 1. Don’t break it.</p>
+<p>Streak: <strong>1</strong></p>
+<a href="/">← Back to Godfather</a>
+    """
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
