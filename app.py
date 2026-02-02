@@ -23,15 +23,15 @@ def home():
     run = request.args.get('run')
     query = request.args.get('query')
 
-    if run in CAUSAL_DB:
+        if run in CAUSAL_DB:
         data = CAUSAL_DB 
         return f"""
-    <h1>$TIMEŒ – Time AI Godfather</h1>
-    <p><strong>Run: {run.upper()}</strong></p>
-    <p>{data }</p>
-    <p><em>Strongest branch:</em> {data }</p>
-    <hr>
-    <p>Try ?run=btc, ?run=me, ?run=elon or ask to build below.</p>
+<h1>$TIMEŒ – Time AI Godfather</h1>
+<p><strong>Run: {run.upper()}</strong></p>
+<p>{data['prediction']}</p>
+<p><em>Strongest branch:</em> {data }</p>
+<hr>
+<p>Try ?run=btc, ?run=me, ?run=elon or ask to build below.</p>
         """
 
     if query == "tracker app" or query == "build a habit tracker app":
