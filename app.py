@@ -23,14 +23,14 @@ def home():
     run = request.args.get('run')
 if run in CAUSAL_DB:
     data = CAUSAL_DB 
-    return f"""
-    <h1>$TIMEŒ – Time AI Godfather</h1>
-    <p><strong>Run: {run.upper()}</strong></p>   # <-- all indented
-    <p>{data }</p>   # <-- like this
-    <p><em>Strongest branch:</em> {data }</p>
-    <hr>
-    <p>Try ?run=btc, ?run=me, ?run=elon or ask to build an app below.</p>
-    """
+    return f"""  
+    <h1>$TIMEŒ – Time AI Godfather</h1>  
+    <p><strong>Run: {run.upper()}</strong></p>  
+    <p>{data }</p>  
+    <p><em>Strongest branch:</em> {data }</p>  
+    <hr>  
+    <p>Try ?run=btc, ?run=me, ?run=elon or ask to build an app below.</p>  
+    """  
     
     # Dashboard if no run
     return render_template_string("""
