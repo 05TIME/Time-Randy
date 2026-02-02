@@ -32,10 +32,10 @@ return f"""
     <p>Try ?run=btc, ?run=me, ?run=elon or ask to build an app below.</p>  
     """  
     
-        # Dashboard if no run
+           # Dashboard if no run
     return render_template_string("""
-    <!DOCTYPE html>
-    <html>
+        <!DOCTYPE html>
+        <html>
         <head>
             <title>$TIMEŒ Engine</title>
             <style>body {font-family: Arial; background:#111; color:#0f0; padding:20px;}</style>
@@ -57,6 +57,5 @@ return f"""
         </body>
         </html>
     """, query=request.args.get('query'))
-
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
