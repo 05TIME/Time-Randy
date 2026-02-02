@@ -35,14 +35,15 @@ def home():
         """
 
     if query == "tracker app" or query == "build a habit tracker app":
-        return f"""
-    <h1>Habit Forge</h1>
-    <p>Your daily chains start here.</p>
-    <form method="GET" action="/track">
-      <input type="text" name="habit" placeholder="meditate">
-      <button>Start</button>
-    </form>
-        """
+    return f"""
+<h1>Habit Forge</h1>
+<p>Your daily chains start here.</p>
+<form method="GET" action="/">
+  <input type="text" name="habit" placeholder="meditate">
+  <input type="hidden" name="query" value="tracker app">
+  <button>Start</button>
+</form>
+    """
 
     # finally, dashboard
     return render_template_string("""
