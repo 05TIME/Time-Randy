@@ -61,11 +61,16 @@ def home():
 @app.route('/track')
 def track():
     habit = request.args.get('habit')
+    try:
+        streak = int(request.args.get(f"streak_{habit}")) + 1
+    except (TypeError, ValueError):
+        streak = 1
     return f"""
-<h1>🔥 Chain Started: {habit}</h1>
-<p>Day 1. Don’t break it.</p>
-<p>Streak: <strong>1</strong></p>
-<a href="/">← Back to Godfather</a>
+<h1>🔥 {habit}</h1>
+<p>Day {streak}. Don’t break it.</p>
+<p>Streak: <strong>{streak}</strong></p>
+<a href="/?query=tracker%20app">← Back</a>
+<a href="/track?habit={habit}&streak_{habit}={streak}">Done →</a>
     """
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
