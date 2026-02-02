@@ -24,7 +24,8 @@ def home():
     query = request.args.get('query')
 
     if run in CAUSAL_DB:
-        data = CAUSAL_DB return f"""
+        data = CAUSAL_DB 
+        return f"""
     <h1>$TIMEŒ – Time AI Godfather</h1>
     <p><strong>Run: {run.upper()}</strong></p>
     <p>{data }</p>
