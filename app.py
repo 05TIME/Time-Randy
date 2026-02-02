@@ -21,7 +21,7 @@ CAUSAL_DB = {
 @app.route('/')
 def home():
     run = request.args.get('run')
-    if run in CAUSAL_DB:
+if run in CAUSAL_DB:
     data = CAUSAL_DB # <-- four spaces
     return f"""
     <h1>$TIMEŒ – Time AI Godfather</h1>
