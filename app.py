@@ -21,33 +21,39 @@ CAUSAL_DB = {
 @app.route('/')
 def home():
     run = request.args.get('run')
+    query = request.args.get('query')
+
     if run in CAUSAL_DB:
-        data = CAUSAL_DB['btc']
-        return f"""
-<h1>$TIMEŒ – Time AI Godfather</h1>
-<p><strong>Run: {run.upper()}</strong></p>
-<p>{data }</p>
-<p><em>Strongest branch:</em> {data['branch']}</p>
-<hr>
-<p>Try ?run=btc, ?run=me, ?run=elon or ask to build an app below.</p>
+        data = CAUSAL_DB return f"""
+    <h1>$TIMEŒ – Time AI Godfather</h1>
+    <p><strong>Run: {run.upper()}</strong></p>
+    <p>{data }</p>
+    <p><em>Strongest branch:</em> {data }</p>
+    <hr>
+    <p>Try ?run=btc, ?run=me, ?run=elon or ask to build below.</p>
         """
- if query == "build a habit tracker app" or query == "tracker app":
-    return f"""
+
+    if query == "tracker app" or query == "build a habit tracker app":
+        return f"""
     <h1>Habit Forge</h1>
     <p>Your daily chains start here.</p>
-    <ul>
-      <li>Add habit → Track streak → Break cycle.</li>
-    </ul>
     <form method="GET" action="/track">
-      <input type="text" name="habit" placeholder="e.g., meditate" style="width:200px;">
+      <input type="text" name="habit" placeholder="meditate">
       <button>Start</button>
     </form>
-    <p>Or say: 'add habit: read 10 pages'.</p>
-    """   
-    # rest of dashboard code—no extra spaces before HTML
+        """
+
+    # finally, dashboard
     return render_template_string("""
 <!DOCTYPE html>
-...
-""", query=request.args.get('query'))
+<html>
+<body style="background:#111;color:#0f0;font-family:monospace;padding:20px;">
+  <h1>$TIMEŒ Engine</h1>
+  <form method="GET">
+    <input type="text" name="query" placeholder="Ask anything" style="width:400px;">
+    <button>Go</button>
+  </form>
+</body></html>
+    """)
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
