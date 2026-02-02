@@ -35,7 +35,7 @@ def home():
         """
 
     if query == "tracker app" or query == "build a habit tracker app":
-    return f"""
+        return f"""
 <h1>Habit Forge</h1>
 <p>Your daily chains start here.</p>
 <form method="GET" action="/">
