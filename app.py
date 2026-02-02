@@ -33,7 +33,7 @@ return f"""
     """  
     
            # Dashboard if no run
-    return render_template_string("""
+return render_template_string("""
         <!DOCTYPE html>
         <html>
         <head>
