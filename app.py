@@ -34,8 +34,8 @@ return f"""
     
         # Dashboard if no run
     return render_template_string("""
-        <!DOCTYPE html>
-        <html>
+    <!DOCTYPE html>
+    <html>
         <head>
             <title>$TIMEŒ Engine</title>
             <style>body {font-family: Arial; background:#111; color:#0f0; padding:20px;}</style>
