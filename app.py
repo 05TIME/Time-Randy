@@ -31,7 +31,19 @@ def home():
 <hr>
 <p>Try ?run=btc, ?run=me, ?run=elon or ask to build an app below.</p>
         """
-    
+ if query == "build a habit tracker app" or query == "tracker app":
+    return f"""
+    <h1>Habit Forge</h1>
+    <p>Your daily chains start here.</p>
+    <ul>
+      <li>Add habit → Track streak → Break cycle.</li>
+    </ul>
+    <form method="GET" action="/track">
+      <input type="text" name="habit" placeholder="e.g., meditate" style="width:200px;">
+      <button>Start</button>
+    </form>
+    <p>Or say: 'add habit: read 10 pages'.</p>
+    """   
     # rest of dashboard code—no extra spaces before HTML
     return render_template_string("""
 <!DOCTYPE html>
