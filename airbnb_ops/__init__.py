@@ -9,11 +9,13 @@ from .agent import OpsRecommendation, recommend
 from .channels import BookingChannelAdapter, ExternalBooking, ManualChannelAdapter
 from .sync import sync_channel
 from .turnover import Turnover, TurnoverState
+from .notifications_adapter import Notification, NotificationAdapter, NotificationChannel, InMemoryNotificationAdapter, turnover_notification
 
 __all__ = [
     "AirbnbOpsService", "TurnoverStatus", "TurnoverTask", "create_turnover_task",
     "OccupancyForecast", "forecast", "Escalation", "EscalationLevel", "assess",
     "FinanceSnapshot", "build_snapshot", "OpsRecommendation", "recommend",
     "BookingChannelAdapter", "ExternalBooking", "ManualChannelAdapter", "sync_channel",
-    "Turnover", "TurnoverState",
+    "Turnover", "TurnoverState", "Notification", "NotificationAdapter",
+    "NotificationChannel", "InMemoryNotificationAdapter", "turnover_notification",
 ]
