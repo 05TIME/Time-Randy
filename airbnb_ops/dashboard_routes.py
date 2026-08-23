@@ -5,19 +5,14 @@ from decimal import Decimal
 from flask import Blueprint, jsonify
 
 from .approval_queue import ApprovalItem
+from .approval_runtime import ApprovalRuntime
 from .approval_service import transition
-from .approval_store import ApprovalStore
 from .dashboard import build_command_center
 from .finance import build_snapshot
 
 bp = Blueprint("airbnb_dashboard", __name__, url_prefix="/airbnb")
-
-# SQLite-backed store. The connection lifecycle can be replaced by the host
-# application's DB manager without changing the route contract.
-import sqlite3
-
-_connection = sqlite3.connect("airbnb_ops.sqlite3", check_same_thread=False)
-_store = ApprovalStore(_connection)
+_runtime = ApprovalRuntime()
+_store = _runtime.store
 
 
 def _approval_payload(item: ApprovalItem) -> dict:
