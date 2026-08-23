@@ -53,7 +53,18 @@ def build_notification_queue(tasks: list[OpsTask], today: date) -> list[Notifica
                 channels,
             )
         )
+
+    task_type_order = {
+        "turnover": 0,
+        "check_in": 1,
+    }
+
     return sorted(
         queue,
-        key=lambda n: (n.priority != "critical", n.due_date, n.notification_id),
+        key=lambda n: (
+            n.priority != "critical",
+            n.due_date,
+            task_type_order.get(n.task_type, 2),
+            n.notification_id,
+        ),
     )
