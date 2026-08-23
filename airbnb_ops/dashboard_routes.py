@@ -1,18 +1,19 @@
 """Flask routes for the Airbnb Business Command Center."""
 
-from decimal import Decimal
+from datetime import date, timedelta
 
 from flask import Blueprint, jsonify
 
 from .approval_queue import ApprovalItem
 from .approval_runtime import ApprovalRuntime
 from .approval_service import transition
-from .dashboard import build_command_center
-from .finance import build_snapshot
+from .dashboard_runtime import build_live_command_center
+from .sqlite_store import SQLiteStore
 
 bp = Blueprint("airbnb_dashboard", __name__, url_prefix="/airbnb")
 _runtime = ApprovalRuntime()
 _store = _runtime.store
+_ledger = SQLiteStore()
 
 
 def _approval_payload(item: ApprovalItem) -> dict:
@@ -26,20 +27,13 @@ def _approval_payload(item: ApprovalItem) -> dict:
 
 @bp.get("/command-center")
 def command_center():
-    finance = build_snapshot(
-        gross_revenue=Decimal("0"),
-        platform_fees=Decimal("0"),
-        operating_expenses=Decimal("0"),
-        outstanding_obligation=Decimal("0"),
-        nightly_contribution=Decimal("150000"),
-    )
-    state = build_command_center(
-        occupancy_percent=Decimal("0"),
-        finance=finance,
-        turnovers=[],
-    )
+    today = date.today()
+    state = build_live_command_center(_ledger, today, today + timedelta(days=30))
     payload = state.as_dict()
     payload["approvals"] = [_approval_payload(item) for item in _store.list_all()]
+    payload["data_source"] = "sqlite-ledger"
+    payload["period_start"] = today.isoformat()
+    payload["period_end"] = (today + timedelta(days=30)).isoformat()
     return jsonify(payload)
 
 
