@@ -12,7 +12,6 @@ from .finance import build_snapshot
 
 bp = Blueprint("airbnb_dashboard", __name__, url_prefix="/airbnb")
 _runtime = ApprovalRuntime()
-_store = _runtime.store
 
 
 def _approval_payload(item: ApprovalItem) -> dict:
@@ -39,18 +38,20 @@ def command_center():
         turnovers=[],
     )
     payload = state.as_dict()
-    payload["approvals"] = [_approval_payload(item) for item in _store.list_all()]
+    with _runtime.store() as store:
+        payload["approvals"] = [_approval_payload(item) for item in store.list_all()]
     return jsonify(payload)
 
 
 @bp.post("/approvals/<approval_id>/<action>")
 def approval_action(approval_id: str, action: str):
-    item = _store.get(approval_id)
-    if item is None:
-        return jsonify({"error": "approval not found"}), 404
-    try:
-        updated = transition(item, action)
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
-    _store.save(updated)
-    return jsonify(_approval_payload(updated))
+    with _runtime.store() as store:
+        item = store.get(approval_id)
+        if item is None:
+            return jsonify({"error": "approval not found"}), 404
+        try:
+            updated = transition(item, action)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        store.save(updated)
+        return jsonify(_approval_payload(updated))
