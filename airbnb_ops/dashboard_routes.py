@@ -1,7 +1,6 @@
 """Flask routes for the Airbnb Business Command Center."""
 
-from datetime import date
-from decimal import Decimal
+from datetime import date, timedelta
 
 from flask import Blueprint, jsonify
 
@@ -9,11 +8,12 @@ from .approval_queue import ApprovalItem
 from .approval_runtime import ApprovalRuntime
 from .approval_service import transition
 from .command_center_decisions import build_decision_panel
-from .dashboard import build_command_center
-from .finance import build_snapshot
+from .dashboard_runtime import build_live_command_center
+from .sqlite_store import SQLiteStore
 
 bp = Blueprint("airbnb_dashboard", __name__, url_prefix="/airbnb")
 _runtime = ApprovalRuntime()
+_ledger = SQLiteStore()
 
 
 def _approval_payload(item: ApprovalItem) -> dict:
@@ -27,23 +27,17 @@ def _approval_payload(item: ApprovalItem) -> dict:
 
 @bp.get("/command-center")
 def command_center():
-    finance = build_snapshot(
-        gross_revenue=Decimal("0"),
-        platform_fees=Decimal("0"),
-        operating_expenses=Decimal("0"),
-        outstanding_obligation=Decimal("0"),
-        nightly_contribution=Decimal("150000"),
-    )
-    state = build_command_center(
-        occupancy_percent=Decimal("0"),
-        finance=finance,
-        turnovers=[],
-    )
+    period_start = date.today()
+    period_end = period_start + timedelta(days=30)
+    state = build_live_command_center(_ledger, period_start, period_end)
     payload = state.as_dict()
     with _runtime.store() as store:
         approvals = store.list_all()
         payload["approvals"] = [_approval_payload(item) for item in approvals]
-        payload["decisions"] = build_decision_panel(approvals, date.today())
+        payload["decisions"] = build_decision_panel(approvals, period_start)
+    payload["data_source"] = "sqlite-ledger"
+    payload["period_start"] = period_start.isoformat()
+    payload["period_end"] = period_end.isoformat()
     return jsonify(payload)
 
 
