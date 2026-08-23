@@ -37,7 +37,12 @@ def track():
         streak = int(request.args.get(f"streak_{habit}")) + 1
     except (TypeError, ValueError):
         streak = 1
-    return f"<h1>🔥 {habit}</h1><p>Day {streak}. Don’t break it.</p><p>Streak: <strong>{streak}</strong></p><a href="/?query=tracker%20app">← Back</a><a href="/track?habit={habit}&streak_{habit}={streak}">Done →</a>"
+    return (
+        f'<h1>🔥 {habit}</h1><p>Day {streak}. Don’t break it.</p>'
+        f'<p>Streak: <strong>{streak}</strong></p>'
+        '<a href="/?query=tracker%20app">← Back</a> '
+        f'<a href="/track?habit={habit}&streak_{habit}={streak}">Done →</a>'
+    )
 
 
 if __name__ == '__main__':
