@@ -1,11 +1,12 @@
 from flask import Flask, render_template_string, request
 
+from airbnb_ops.finance_routes import bp as airbnb_finance_bp
 from airbnb_ops.routes import bp as airbnb_ops_bp
 
 app = Flask(__name__)
 app.register_blueprint(airbnb_ops_bp)
+app.register_blueprint(airbnb_finance_bp)
 
-# Simple in-memory "causal database" – expand with real logic later
 CAUSAL_DB = {
     'btc': {
         'prediction': "BTC hits $165k by Q2 2026. Causal chain: Fed cuts → liquidity surge → crypto adoption → price explosion. Counterfactual: If no cut, $90k max.",
@@ -26,42 +27,12 @@ CAUSAL_DB = {
 def home():
     run = request.args.get('run')
     query = request.args.get('query')
-
     if run in CAUSAL_DB:
         data = CAUSAL_DB[run]
-        return f"""
-<h1>$TIMEŒ – Time AI Godfather</h1>
-<p><strong>Run: {run.upper()}</strong></p>
-<p>{data['prediction']}</p>
-<p><em>Strongest branch:</em> {data['branch']}</p>
-<hr>
-<p>Try ?run=btc, ?run=me, ?run=elon or ask to build below.</p>
-        """
-
+        return f"<h1>$TIMEŒ – Time AI Godfather</h1><p><strong>Run: {run.upper()}</strong></p><p>{data['prediction']}</p><p><em>Strongest branch:</em> {data['branch']}</p>"
     if query == "tracker app" or query == "build a habit tracker app":
-        return """
-<h1>Habit Forge</h1>
-<p>Your daily chains start here.</p>
-<form method="GET" action="/">
-  <input type="text" name="habit" placeholder="meditate">
-  <input type="hidden" name="query" value="tracker app">
-  <button>Start</button>
-</form>
-    """
-
-    return render_template_string("""
-<!DOCTYPE html>
-<html>
-<body style="background:#111;color:#0f0;font-family:monospace;padding:20px;">
-  <h1>$TIMEŒ Engine</h1>
-  <p><a href="/airbnb" style="color:#0f0;">Open Airbnb Ops →</a></p>
-  <form method="GET">
-    <input type="text" name="query" placeholder="Ask anything" style="width:400px;">
-    <button>Go</button>
-  </form>
-</body>
-</html>
-    """)
+        return """<h1>Habit Forge</h1><p>Your daily chains start here.</p><form method="GET" action="/"><input type="text" name="habit" placeholder="meditate"><input type="hidden" name="query" value="tracker app"><button>Start</button></form>"""
+    return render_template_string("""<!DOCTYPE html><html><body style="background:#111;color:#0f0;font-family:monospace;padding:20px;"><h1>$TIMEŒ Engine</h1><p><a href="/airbnb" style="color:#0f0;">Open Airbnb Ops →</a></p><form method="GET"><input type="text" name="query" placeholder="Ask anything" style="width:400px;"><button>Go</button></form></body></html>""")
 
 
 @app.route('/track')
@@ -71,13 +42,7 @@ def track():
         streak = int(request.args.get(f"streak_{habit}")) + 1
     except (TypeError, ValueError):
         streak = 1
-    return f"""
-<h1>🔥 {habit}</h1>
-<p>Day {streak}. Don’t break it.</p>
-<p>Streak: <strong>{streak}</strong></p>
-<a href="/?query=tracker%20app">← Back</a>
-<a href="/track?habit={habit}&streak_{habit}={streak}">Done →</a>
-    """
+    return f"<h1>🔥 {habit}</h1><p>Day {streak}. Don’t break it.</p><p>Streak: <strong>{streak}</strong></p><a href="/?query=tracker%20app">← Back</a><a href="/track?habit={habit}&streak_{habit}={streak}">Done →</a>"
 
 
 if __name__ == '__main__':
