@@ -11,6 +11,7 @@ from .sync import sync_channel
 from .turnover import Turnover, TurnoverState
 from .notifications_adapter import Notification, NotificationAdapter, NotificationChannel, InMemoryNotificationAdapter, turnover_notification
 from .dashboard import BusinessCommandCenter, build_command_center
+from .chief_of_staff import ChiefOfStaffBrief, build_brief
 
 __all__ = [
     "AirbnbOpsService", "TurnoverStatus", "TurnoverTask", "create_turnover_task",
@@ -19,5 +20,5 @@ __all__ = [
     "BookingChannelAdapter", "ExternalBooking", "ManualChannelAdapter", "sync_channel",
     "Turnover", "TurnoverState", "Notification", "NotificationAdapter",
     "NotificationChannel", "InMemoryNotificationAdapter", "turnover_notification",
-    "BusinessCommandCenter", "build_command_center",
+    "BusinessCommandCenter", "build_command_center", "ChiefOfStaffBrief", "build_brief",
 ]
