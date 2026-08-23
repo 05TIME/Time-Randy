@@ -1,5 +1,6 @@
 """Flask routes for the Airbnb Business Command Center."""
 
+from datetime import date
 from decimal import Decimal
 
 from flask import Blueprint, jsonify
@@ -7,6 +8,7 @@ from flask import Blueprint, jsonify
 from .approval_queue import ApprovalItem
 from .approval_runtime import ApprovalRuntime
 from .approval_service import transition
+from .command_center_decisions import build_decision_panel
 from .dashboard import build_command_center
 from .finance import build_snapshot
 
@@ -39,7 +41,9 @@ def command_center():
     )
     payload = state.as_dict()
     with _runtime.store() as store:
-        payload["approvals"] = [_approval_payload(item) for item in store.list_all()]
+        approvals = store.list_all()
+        payload["approvals"] = [_approval_payload(item) for item in approvals]
+        payload["decisions"] = build_decision_panel(approvals, date.today())
     return jsonify(payload)
 
 
