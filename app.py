@@ -1,11 +1,13 @@
 from flask import Flask, render_template_string, request
 
+from airbnb_ops.dashboard_routes import bp as airbnb_dashboard_bp
 from airbnb_ops.finance_routes import bp as airbnb_finance_bp
 from airbnb_ops.routes import bp as airbnb_ops_bp
 
 app = Flask(__name__)
 app.register_blueprint(airbnb_ops_bp)
 app.register_blueprint(airbnb_finance_bp)
+app.register_blueprint(airbnb_dashboard_bp)
 
 CAUSAL_DB = {
     'btc': {
@@ -32,7 +34,7 @@ def home():
         return f"<h1>$TIMEŒ – Time AI Godfather</h1><p><strong>Run: {run.upper()}</strong></p><p>{data['prediction']}</p><p><em>Strongest branch:</em> {data['branch']}</p>"
     if query == "tracker app" or query == "build a habit tracker app":
         return """<h1>Habit Forge</h1><p>Your daily chains start here.</p><form method="GET" action="/"><input type="text" name="habit" placeholder="meditate"><input type="hidden" name="query" value="tracker app"><button>Start</button></form>"""
-    return render_template_string("""<!DOCTYPE html><html><body style="background:#111;color:#0f0;font-family:monospace;padding:20px;"><h1>$TIMEŒ Engine</h1><p><a href="/airbnb" style="color:#0f0;">Open Airbnb Ops →</a></p><form method="GET"><input type="text" name="query" placeholder="Ask anything" style="width:400px;"><button>Go</button></form></body></html>""")
+    return render_template_string("""<!DOCTYPE html><html><body style="background:#111;color:#0f0;font-family:monospace;padding:20px;"><h1>$TIMEŒ Engine</h1><p><a href="/airbnb/command-center" style="color:#0f0;">Open Airbnb Command Center →</a></p><form method="GET"><input type="text" name="query" placeholder="Ask anything" style="width:400px;"><button>Go</button></form></body></html>""")
 
 
 @app.route('/track')
