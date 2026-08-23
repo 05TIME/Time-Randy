@@ -6,14 +6,27 @@ from flask import Blueprint, jsonify
 
 from .approval_queue import ApprovalItem
 from .approval_service import transition
+from .approval_store import ApprovalStore
 from .dashboard import build_command_center
 from .finance import build_snapshot
 
 bp = Blueprint("airbnb_dashboard", __name__, url_prefix="/airbnb")
 
-# The approval store is intentionally in-memory for this UI boundary. It keeps
-# the feature deterministic and prevents accidental external side effects.
-_approvals: dict[str, ApprovalItem] = {}
+# SQLite-backed store. The connection lifecycle can be replaced by the host
+# application's DB manager without changing the route contract.
+import sqlite3
+
+_connection = sqlite3.connect("airbnb_ops.sqlite3", check_same_thread=False)
+_store = ApprovalStore(_connection)
+
+
+def _approval_payload(item: ApprovalItem) -> dict:
+    return {
+        "approval_id": item.approval_id,
+        "status": item.status.value,
+        "task": item.task.as_dict(),
+        "decided_at": item.decided_at,
+    }
 
 
 @bp.get("/command-center")
@@ -31,32 +44,18 @@ def command_center():
         turnovers=[],
     )
     payload = state.as_dict()
-    payload["approvals"] = [
-        {
-            "approval_id": item.approval_id,
-            "status": item.status.value,
-            "task": item.task.as_dict(),
-            "decided_at": item.decided_at,
-        }
-        for item in _approvals.values()
-    ]
+    payload["approvals"] = [_approval_payload(item) for item in _store.list_all()]
     return jsonify(payload)
 
 
 @bp.post("/approvals/<approval_id>/<action>")
 def approval_action(approval_id: str, action: str):
-    item = _approvals.get(approval_id)
+    item = _store.get(approval_id)
     if item is None:
         return jsonify({"error": "approval not found"}), 404
     try:
         updated = transition(item, action)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
-    _approvals[approval_id] = updated
-    return jsonify(
-        {
-            "approval_id": updated.approval_id,
-            "status": updated.status.value,
-            "decided_at": updated.decided_at,
-        }
-    )
+    _store.save(updated)
+    return jsonify(_approval_payload(updated))
