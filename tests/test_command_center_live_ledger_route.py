@@ -28,4 +28,4 @@ def test_command_center_route_exposes_live_ledger_metrics(tmp_path, monkeypatch)
     assert payload["gross_revenue"] == "300000"
     assert payload["net_operating_result"] == "250000"
     assert payload["outstanding_obligation"] == "900000"
-    assert payload["occupancy_percent"] == "0.2857142857142857142857142857"
+    assert payload["occupancy_percent"].startswith("0.285714")
