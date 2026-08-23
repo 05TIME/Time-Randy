@@ -1,6 +1,9 @@
 from flask import Flask, render_template_string, request
 
+from airbnb_ops.routes import bp as airbnb_ops_bp
+
 app = Flask(__name__)
+app.register_blueprint(airbnb_ops_bp)
 
 # Simple in-memory "causal database" – expand with real logic later
 CAUSAL_DB = {
@@ -18,24 +21,25 @@ CAUSAL_DB = {
     }
 }
 
+
 @app.route('/')
 def home():
     run = request.args.get('run')
     query = request.args.get('query')
 
-    if run in CAUSAL_DB:         
-        data = CAUSAL_DB 
+    if run in CAUSAL_DB:
+        data = CAUSAL_DB[run]
         return f"""
 <h1>$TIMEŒ – Time AI Godfather</h1>
 <p><strong>Run: {run.upper()}</strong></p>
-<p>{data }</p>
-<p><em>Strongest branch:</em> {data }</p>
+<p>{data['prediction']}</p>
+<p><em>Strongest branch:</em> {data['branch']}</p>
 <hr>
 <p>Try ?run=btc, ?run=me, ?run=elon or ask to build below.</p>
         """
 
     if query == "tracker app" or query == "build a habit tracker app":
-        return f"""
+        return """
 <h1>Habit Forge</h1>
 <p>Your daily chains start here.</p>
 <form method="GET" action="/">
@@ -45,12 +49,12 @@ def home():
 </form>
     """
 
-    # finally, dashboard
     return render_template_string("""
 <!DOCTYPE html>
 <html>
 <body style="background:#111;color:#0f0;font-family:monospace;padding:20px;">
   <h1>$TIMEŒ Engine</h1>
+  <p><a href="/airbnb" style="color:#0f0;">Open Airbnb Ops →</a></p>
   <form method="GET">
     <input type="text" name="query" placeholder="Ask anything" style="width:400px;">
     <button>Go</button>
@@ -58,6 +62,7 @@ def home():
 </body>
 </html>
     """)
+
 
 @app.route('/track')
 def track():
@@ -73,5 +78,7 @@ def track():
 <a href="/?query=tracker%20app">← Back</a>
 <a href="/track?habit={habit}&streak_{habit}={streak}">Done →</a>
     """
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
