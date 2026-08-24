@@ -1,7 +1,7 @@
 """Flask routes for the Airbnb Business Command Center."""
 
 import os
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal
 
 from flask import Blueprint, jsonify
