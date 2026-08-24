@@ -3,6 +3,7 @@ from flask import Flask, render_template_string, request
 from airbnb_ops.brief_routes import bp as airbnb_brief_bp
 from airbnb_ops.dashboard_routes import bp as airbnb_dashboard_bp
 from airbnb_ops.finance_routes import bp as airbnb_finance_bp
+from airbnb_ops.github_webhook import bp as github_webhook_bp
 from airbnb_ops.routes import bp as airbnb_ops_bp
 from chief_of_staff.dashboard import bp as chief_of_staff_dashboard_bp
 
@@ -11,6 +12,7 @@ app.register_blueprint(airbnb_ops_bp)
 app.register_blueprint(airbnb_finance_bp)
 app.register_blueprint(airbnb_dashboard_bp)
 app.register_blueprint(airbnb_brief_bp)
+app.register_blueprint(github_webhook_bp)
 app.register_blueprint(chief_of_staff_dashboard_bp)
 
 CAUSAL_DB = {
