@@ -27,7 +27,8 @@ def test_command_center_uses_persisted_ledger(tmp_path, monkeypatch):
     assert payload["gross_revenue"] == "450000"
     assert payload["net_operating_result"] == "400000"
     assert payload["outstanding_obligation"] == "900000"
-    assert payload["debt_clearing_nights"] == 3
+    # Debt-clearing nights use the realized net operating contribution per booked night.
+    assert payload["debt_clearing_nights"] == 7
     assert payload["occupancy_percent"] == "0.09677419354838709677419354839"
 
 
