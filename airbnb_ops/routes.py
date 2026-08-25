@@ -79,18 +79,22 @@ def summary_api():
 
 @bp.post("/sync/airbnb")
 def sync_airbnb():
-    """Sync the listing from an Airbnb-exported iCal URL.
-
-    Set TIMEOE_AIRBNB_ICAL_URL to the URL copied from the Airbnb host calendar.
-    """
+    """Sync the listing from an Airbnb-exported iCal URL."""
     calendar_url = os.getenv("TIMEOE_AIRBNB_ICAL_URL")
     if not calendar_url:
         return jsonify({"error": "TIMEOE_AIRBNB_ICAL_URL is not configured"}), 503
 
     start = _date_arg("start") or date.today()
     end = _date_arg("end") or date(start.year + 1, 1, 1)
+    store = _store()
     try:
-        imported = sync_channel(_service(), AirbnbICalAdapter(calendar_url), start, end)
+        imported = sync_channel(
+            _service(),
+            AirbnbICalAdapter(calendar_url),
+            start,
+            end,
+            on_import=store.add_booking,
+        )
     except (OSError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 502
     return jsonify({"status": "synced", "source": "airbnb_ical", "imported": imported, "start": start.isoformat(), "end": end.isoformat()})
