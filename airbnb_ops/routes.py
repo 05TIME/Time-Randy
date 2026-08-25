@@ -6,9 +6,11 @@ import os
 
 from flask import Blueprint, jsonify, render_template_string, request
 
+from .airbnb_ical import AirbnbICalAdapter
 from .pricing import recommend_rate
 from .service import AirbnbOpsService, Booking, Expense, PropertyConfig, money
 from .store import SQLiteStore
+from .sync import sync_channel
 
 bp = Blueprint("airbnb_ops", __name__, url_prefix="/airbnb")
 
@@ -73,6 +75,25 @@ def summary_api():
     start = _date_arg("start") or date.today().replace(day=1)
     end = _date_arg("end") or _next_month(start)
     return jsonify(_json_safe(_service().summary(start, end)))
+
+
+@bp.post("/sync/airbnb")
+def sync_airbnb():
+    """Sync the listing from an Airbnb-exported iCal URL.
+
+    Set TIMEOE_AIRBNB_ICAL_URL to the URL copied from the Airbnb host calendar.
+    """
+    calendar_url = os.getenv("TIMEOE_AIRBNB_ICAL_URL")
+    if not calendar_url:
+        return jsonify({"error": "TIMEOE_AIRBNB_ICAL_URL is not configured"}), 503
+
+    start = _date_arg("start") or date.today()
+    end = _date_arg("end") or date(start.year + 1, 1, 1)
+    try:
+        imported = sync_channel(_service(), AirbnbICalAdapter(calendar_url), start, end)
+    except (OSError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 502
+    return jsonify({"status": "synced", "source": "airbnb_ical", "imported": imported, "start": start.isoformat(), "end": end.isoformat()})
 
 
 @bp.post("/bookings")
