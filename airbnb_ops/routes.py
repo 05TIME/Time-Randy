@@ -59,6 +59,17 @@ def summary_api():
     return jsonify(_json_safe(_service().summary(start, end)))
 
 
+@bp.get("/config-status")
+def config_status():
+    """Safe runtime diagnostic; never returns the private calendar URL."""
+    value = os.getenv("TIMEOE_AIRBNB_ICAL_URL")
+    return jsonify({
+        "airbnb_ical_configured": bool(value),
+        "airbnb_ical_length": len(value) if value else 0,
+        "runtime": "render",
+    })
+
+
 def _sync_airbnb():
     """Sync the listing from an Airbnb-exported iCal URL without exposing the URL."""
     calendar_url = os.getenv("TIMEOE_AIRBNB_ICAL_URL")
