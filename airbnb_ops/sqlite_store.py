@@ -1,5 +1,6 @@
 """SQLite persistence for the TIMEŒ Airbnb Ops ledger."""
 
+import os
 import sqlite3
 from datetime import date
 from decimal import Decimal
@@ -33,9 +34,18 @@ CREATE TABLE IF NOT EXISTS expenses (
 """
 
 
+def _default_database_path() -> str:
+    """Use Vercel's writable temp filesystem unless explicitly configured."""
+    if os.getenv("AIRBNB_DB_PATH"):
+        return os.environ["AIRBNB_DB_PATH"]
+    if os.getenv("VERCEL"):
+        return "/tmp/airbnb_ops.sqlite3"
+    return "data/airbnb_ops.sqlite3"
+
+
 class SQLiteStore:
-    def __init__(self, path: str | Path = "data/airbnb_ops.sqlite3") -> None:
-        self.path = Path(path)
+    def __init__(self, path: str | Path | None = None):
+        self.path = Path(path or _default_database_path())
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize()
 
