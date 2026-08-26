@@ -31,7 +31,7 @@ def home():
         return f"<h1>$TIMEŒ – Time AI Godfather</h1><p><strong>Run: {run.upper()}</strong></p><p>{data['prediction']}</p><p><em>Strongest branch:</em> {data['branch']}</p>"
     if query == "tracker app" or query == "build a habit tracker app":
         return """<h1>Habit Forge</h1><p>Your daily chains start here.</p><form method="GET" action="/"><input type="text" name="habit" placeholder="meditate"><input type="hidden" name="query" value="tracker app"><button>Start</button></form>"""
-    return render_template_string("""<!DOCTYPE html><html><body style="background:#111;color:#0f0;font-family:monospace;padding:20px;"><h1>$TIMEŒ Engine</h1><p><a href="/chief-of-staff" style="color:#0f0;">Open TIMEŒ Command Center →</a></p><p><a href="/airbnb/command-center" style="color:#0f0;">Open Airbnb Command Center →</a></p><p><a href="/airbnb/brief" style="color:#0f0;">Open Chief of Staff Brief →</a></p><form method="GET"><input type="text" name="query" placeholder="Ask anything" style="width:400px;"><button>Go</button></form></body></html>""")
+    return render_template_string("""<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>TIMEŒ Engine</title><style>body{margin:0;background:#090b10;color:#f5f7fa;font-family:-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif}.wrap{max-width:760px;margin:auto;padding:28px 18px}.brand{color:#35f36b;font-weight:900;letter-spacing:.06em;font-size:14px}.hero{padding:42px 0 26px}h1{font-size:42px;line-height:1.05;margin:0 0 12px}.muted{color:#98a2b1;line-height:1.6}.links{display:grid;gap:12px;margin:24px 0}.link{display:block;padding:18px;border:1px solid #29313d;border-radius:16px;background:#11151c;color:#f5f7fa;text-decoration:none}.link b{display:block;margin-bottom:5px}.link span{color:#35f36b;font-size:13px}.search{display:flex;gap:8px;margin-top:20px}.search input{flex:1;min-width:0;padding:13px;border-radius:12px;border:1px solid #303846;background:#11151c;color:white}.search button{padding:13px 16px;border:0;border-radius:12px;background:#35f36b;font-weight:800}</style></head><body><main class="wrap"><div class="brand">$TIMEŒ ENGINE</div><section class="hero"><h1>Temporal intelligence for operations.</h1><p class="muted">Your command centers, Airbnb operations, and AI workflows in one mobile-first workspace.</p></section><nav class="links"><a class="link" href="/airbnb/dashboard"><b>Airbnb Turnover Monitor</b><span>Open the live operations dashboard →</span></a><a class="link" href="/airbnb/command-center"><b>Airbnb Command Center API</b><span>Open live business data →</span></a><a class="link" href="/chief-of-staff"><b>TIMEŒ Command Center</b><span>Open chief of staff →</span></a><a class="link" href="/airbnb/brief"><b>Chief of Staff Brief</b><span>Open the latest brief →</span></a></nav><form class="search" method="GET"><input name="query" placeholder="Ask anything"><button>Go</button></form></main></body></html>""")
 
 
 @app.route('/track')
@@ -41,12 +41,7 @@ def track():
         streak = int(request.args.get(f"streak_{habit}")) + 1
     except (TypeError, ValueError):
         streak = 1
-    return (
-        f'<h1>🔥 {habit}</h1><p>Day {streak}. Don’t break it.</p>'
-        f'<p>Streak: <strong>{streak}</strong></p>'
-        '<a href="/?query=tracker%20app">← Back</a> '
-        f'<a href="/track?habit={habit}&streak_{habit}={streak}">Done →</a>'
-    )
+    return f'<h1>🔥 {habit}</h1><p>Day {streak}. Don’t break it.</p><p>Streak: <strong>{streak}</strong></p><a href="/?query=tracker%20app">← Back</a> <a href="/track?habit={habit}&streak_{habit}={streak}">Done →</a>'
 
 
 if __name__ == '__main__':
