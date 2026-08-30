@@ -1,6 +1,6 @@
 """HTTP interface for the Airbnb Ops Agent."""
 
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 import os
 
@@ -49,7 +49,7 @@ def dashboard():
     tasks = store.open_tasks()
     low_inventory = store.low_inventory()
     maintenance = store.open_maintenance()
-    return render_template_string("""<!doctype html><html><head><meta charset="utf-8"><title>TIMEŒ Airbnb Ops</title><style>body{font-family:system-ui;max-width:1000px;margin:40px auto;padding:0 20px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{padding:18px;border:1px solid #ddd;border-radius:12px}.alert{padding:10px;background:#fff3cd;margin:8px 0;border-radius:8px}.bad{background:#f8d7da}</style></head><body><h1>TIMEŒ — Airbnb Ops</h1><p>{{ summary.property }}</p><div class="grid"><div class="card"><b>Occupancy</b><h2>{{ '%.1f'|format(summary.occupancy_rate * 100) }}%</h2></div><div class="card"><b>Gross revenue</b><h2>{{ money(summary.gross_revenue) }}</h2></div><div class="card"><b>Net operating result</b><h2>{{ money(summary.net_operating_result) }}</h2></div><div class="card"><b>Booked nights</b><h2>{{ summary.booked_nights }}</h2></div><div class="card"><b>ADR</b><h2>{{ money(summary.adr) }}</h2></div><div class="card"><b>Debt-clearing nights</b><h2>{{ summary.debt_clearing_nights }}</h2></div></div><h2>Operational alerts</h2>{% for alert in alerts %}<div class="alert">{{ alert }}</div>{% else %}<p>No alerts.</p>{% endfor %}<h2>Open work</h2><p>{{ tasks|length }} task(s), {{ low_inventory|length }} low-inventory item(s), {{ maintenance|length }} maintenance issue(s).</p></body></html>""", summary=summary, alerts=alerts, tasks=tasks, low_inventory=low_inventory, maintenance=maintenance, money=money)
+    return render_template_string("""<!doctype html><html><head><meta charset=\"utf-8\"><title>TIMEŒ Airbnb Ops</title><style>body{font-family:system-ui;max-width:1000px;margin:40px auto;padding:0 20px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{padding:18px;border:1px solid #ddd;border-radius:12px}.alert{padding:10px;background:#fff3cd;margin:8px 0;border-radius:8px}.bad{background:#f8d7da}</style></head><body><h1>TIMEŒ — Airbnb Ops</h1><p>{{ summary.property }}</p><div class=\"grid\"><div class=\"card\"><b>Occupancy</b><h2>{{ '%.1f'|format(summary.occupancy_rate * 100) }}%</h2></div><div class=\"card\"><b>Gross revenue</b><h2>{{ money(summary.gross_revenue) }}</h2></div><div class=\"card\"><b>Net operating result</b><h2>{{ money(summary.net_operating_result) }}</h2></div><div class=\"card\"><b>Booked nights</b><h2>{{ summary.booked_nights }}</h2></div><div class=\"card\"><b>ADR</b><h2>{{ money(summary.adr) }}</h2></div><div class=\"card\"><b>Debt-clearing nights</b><h2>{{ summary.debt_clearing_nights }}</h2></div></div><h2>Operational alerts</h2>{% for alert in alerts %}<div class=\"alert\">{{ alert }}</div>{% else %}<p>No alerts.</p>{% endfor %}<h2>Open work</h2><p>{{ tasks|length }} task(s), {{ low_inventory|length }} low-inventory item(s), {{ maintenance|length }} maintenance issue(s).</p></body></html>""", summary=summary, alerts=alerts, tasks=tasks, low_inventory=low_inventory, maintenance=maintenance, money=money)
 
 
 @bp.get("/summary")
@@ -63,11 +63,7 @@ def summary_api():
 def config_status():
     """Safe runtime diagnostic; never returns the private calendar URL."""
     value = os.getenv("TIMEOE_AIRBNB_ICAL_URL")
-    return jsonify({
-        "airbnb_ical_configured": bool(value),
-        "airbnb_ical_length": len(value) if value else 0,
-        "runtime": "render",
-    })
+    return jsonify({"airbnb_ical_configured": bool(value), "airbnb_ical_length": len(value) if value else 0, "runtime": "render"})
 
 
 def _sync_airbnb():
@@ -76,7 +72,9 @@ def _sync_airbnb():
     if not calendar_url:
         return jsonify({"error": "TIMEOE_AIRBNB_ICAL_URL is not configured"}), 503
     start = _date_arg("start") or date.today()
-    end = _date_arg("end") or date(start.year + 1, 1, 1)
+    end = _date_arg("end") or (start + timedelta(days=365))
+    if end <= start:
+        return jsonify({"error": "end must be after start"}), 400
     store = _store()
     try:
         imported = sync_channel(_service(), AirbnbICalAdapter(calendar_url), start, end, on_import=store.add_booking)
@@ -92,7 +90,6 @@ def sync_airbnb():
 
 @bp.get("/sync/airbnb")
 def sync_airbnb_browser():
-    """Browser-friendly sync so the host can trigger a refresh from Safari."""
     return _sync_airbnb()
 
 
