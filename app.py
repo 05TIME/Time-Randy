@@ -6,6 +6,7 @@ from airbnb_ops.finance_routes import bp as airbnb_finance_bp
 from airbnb_ops.github_webhook import bp as github_webhook_bp
 from airbnb_ops.routes import bp as airbnb_ops_bp
 from chief_of_staff.dashboard import bp as chief_of_staff_dashboard_bp
+from timeoe_api import bp as timeoe_api_bp
 
 app = Flask(__name__)
 app.register_blueprint(airbnb_ops_bp)
@@ -14,6 +15,7 @@ app.register_blueprint(airbnb_dashboard_bp)
 app.register_blueprint(airbnb_brief_bp)
 app.register_blueprint(github_webhook_bp)
 app.register_blueprint(chief_of_staff_dashboard_bp)
+app.register_blueprint(timeoe_api_bp)
 
 CAUSAL_DB = {
     'btc': {'prediction': "BTC hits $165k by Q2 2026. Causal chain: Fed cuts → liquidity surge → crypto adoption → price explosion. Counterfactual: If no cut, $90k max.", 'branch': "Strong hold timeline."},
