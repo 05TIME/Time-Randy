@@ -47,21 +47,8 @@ def create_command():
     if not isinstance(plan, list):
         return jsonify({"error": "plan must be an array"}), 400
 
-    client = _supabase()
-    access_error = _require_business_access(client, user_id, str(business_id))
-    if access_error:
-        return access_error
-
-    command_id = str(uuid.uuid4())
-    command = {
-        "id": command_id,
-        "business_id": business_id,
-        "objective": objective,
-        "status": "planning",
-        "plan": plan,
-    }
-    client.table("timeoe_commands").insert(command).execute()
-
+    # Validate the full plan before performing any writes.
+    normalized_plan = []
     for i, item in enumerate(plan):
         if isinstance(item, str):
             title = item
@@ -75,7 +62,14 @@ def create_command():
                 return jsonify({"error": "task dependencies must be arrays"}), 400
         else:
             return jsonify({"error": "each plan item must be a string or object"}), 400
+        normalized_plan.append((title, agent_id, dependencies))
 
+    client = _supabase()
+    access_error = _require_business_access(client, user_id, str(business_id))
+    if access_error:
+        return access_error
+
+    for _, agent_id, _ in normalized_plan:
         if agent_id:
             agent = (
                 client.table("timeoe_agents")
@@ -89,6 +83,17 @@ def create_command():
             if not agent:
                 return jsonify({"error": "agent does not belong to business"}), 403
 
+    command_id = str(uuid.uuid4())
+    command = {
+        "id": command_id,
+        "business_id": business_id,
+        "objective": objective,
+        "status": "planning",
+        "plan": plan,
+    }
+    client.table("timeoe_commands").insert(command).execute()
+
+    for i, (title, agent_id, dependencies) in enumerate(normalized_plan):
         client.table("timeoe_execution_tasks").insert({
             "command_id": command_id,
             "business_id": business_id,
@@ -162,10 +167,22 @@ def recent_events():
     except ValueError:
         return jsonify({"error": "limit must be an integer"}), 400
 
+    command_rows = (
+        client.table("timeoe_commands")
+        .select("id")
+        .eq("business_id", business_id)
+        .limit(500)
+        .execute()
+        .data
+    )
+    command_ids = [row["id"] for row in command_rows]
+    if not command_ids:
+        return jsonify({"events": []})
+
     rows = (
         client.table("timeoe_events")
         .select("*")
-        .eq("business_id", business_id)
+        .in_("command_id", command_ids)
         .order("created_at", desc=True)
         .limit(limit)
         .execute()
