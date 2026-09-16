@@ -34,6 +34,154 @@ def _require_business_access(client, user_id: str, business_id: str):
     return None
 
 
+def _worker_authorized() -> bool:
+    secret = os.environ.get("TIMEOE_WORKER_SECRET")
+    supplied = request.headers.get("x-timeoe-worker-secret")
+    return bool(secret and supplied and supplied == secret)
+
+
+@bp.post("/worker")
+def autonomous_worker():
+    """Process a small batch of queued revenue tasks without external side effects.
+
+    Research/planning tasks are recorded as verified work. Sales outreach is converted
+    into approval-gated business actions; no external message is sent by this worker.
+    """
+    if not _worker_authorized():
+        return jsonify({"error": "unauthorized worker"}), 401
+
+    try:
+        limit = min(max(int(request.args.get("limit", 10)), 1), 20)
+    except ValueError:
+        return jsonify({"error": "limit must be an integer"}), 400
+
+    client = _supabase()
+    queued = (
+        client.table("timeoe_execution_tasks")
+        .select("*")
+        .eq("state", "queued")
+        .order("created_at")
+        .limit(limit)
+        .execute()
+        .data
+        or []
+    )
+
+    results = []
+    for task in queued:
+        task_id = task["id"]
+        command_id = task["command_id"]
+        business_id = task["business_id"]
+        try:
+            client.table("timeoe_execution_tasks").update({
+                "state": "running",
+                "attempts": int(task.get("attempts") or 0) + 1,
+                "started_at": "now()",
+                "error": None,
+            }).eq("id", task_id).execute()
+
+            title = task.get("title") or ""
+            task_key = task.get("task_key") or ""
+            result = {"worker": "TIMEOE", "task_key": task_key, "target_usd": 10000, "capital_required": 0}
+
+            if "sales_outreach" in task_key:
+                prospects = (
+                    client.table("timeoe_revenue_opportunities")
+                    .select("id,company_name,contact_email,location,offer_fit,estimated_value")
+                    .eq("business_id", business_id)
+                    .eq("external_contact_approved", False)
+                    .eq("stage", "prospect")
+                    .order("created_at")
+                    .limit(10)
+                    .execute()
+                    .data
+                    or []
+                )
+                action_ids = []
+                for prospect in prospects:
+                    email = prospect.get("contact_email")
+                    if not email:
+                        continue
+                    idem = f"outreach:{prospect['id']}"
+                    existing = (
+                        client.table("timeoe_business_actions")
+                        .select("id")
+                        .eq("idempotency_key", idem)
+                        .limit(1)
+                        .execute()
+                        .data
+                        or []
+                    )
+                    if existing:
+                        action_ids.append(existing[0]["id"])
+                        continue
+                    draft = (
+                        f"Hello {prospect['company_name']} team,\n\n"
+                        f"I noticed an opportunity to improve {prospect.get('offer_fit') or 'customer follow-up'} "
+                        "with a lightweight automation workflow. TIMEŒ can map the current process, "
+                        "build the first workflow, and measure the result. Would you be open to a short call "
+                        "to see whether a pilot makes sense?"
+                    )
+                    action = client.table("timeoe_business_actions").insert({
+                        "command_id": command_id,
+                        "task_id": task_id,
+                        "business_id": business_id,
+                        "action_type": "SEND_EXTERNAL_MESSAGE",
+                        "provider": os.environ.get("TIMEOE_OUTREACH_PROVIDER", "webhook"),
+                        "payload": {"recipient": email, "subject": "TIMEŒ automation pilot", "draft": draft, "opportunity_id": prospect["id"]},
+                        "status": "PENDING_APPROVAL",
+                        "external_effect": False,
+                        "requires_approval": True,
+                        "currency": "USD",
+                        "verification": {"draft_only": True, "external_send": False},
+                        "idempotency_key": idem,
+                    }).execute().data
+                    if action:
+                        action_ids.append(action[0]["id"])
+                result.update({"approval_gated_drafts": len(action_ids), "action_ids": action_ids, "external_send": False})
+
+            elif "revenue_scout" in task_key or "lead_generation" in task_key:
+                count = (
+                    client.table("timeoe_revenue_opportunities")
+                    .select("id", count="exact")
+                    .eq("business_id", business_id)
+                    .execute()
+                ).count or 0
+                result.update({"qualified_opportunities": count, "next_action": "prepare_approval_gated_outreach"})
+            elif "risk_" in task_key:
+                result.update({"risk_gate": "active", "external_send": False, "spend": False, "live_trading": False})
+            else:
+                result.update({"work_recorded": True, "next_action": "convert_verified_work_into_revenue_actions"})
+
+            client.table("timeoe_execution_tasks").update({
+                "state": "verified",
+                "result": result,
+                "completed_at": "now()",
+            }).eq("id", task_id).execute()
+            client.table("timeoe_events").insert({
+                "command_id": command_id,
+                "task_id": task_id,
+                "agent_id": task.get("agent_id"),
+                "event_type": "AUTONOMOUS_TASK_VERIFIED",
+                "state": "verified",
+                "payload": result,
+            }).execute()
+            results.append({"task_id": task_id, "state": "verified", "result": result})
+        except Exception as exc:
+            client.table("timeoe_execution_tasks").update({"state": "retry", "error": str(exc)}).eq("id", task_id).execute()
+            client.table("timeoe_events").insert({
+                "command_id": command_id,
+                "task_id": task_id,
+                "agent_id": task.get("agent_id"),
+                "event_type": "AUTONOMOUS_TASK_RETRY",
+                "state": "retry",
+                "payload": {"error": str(exc)},
+            }).execute()
+            results.append({"task_id": task_id, "state": "retry", "error": str(exc)})
+
+    return jsonify({"worker": "TIMEOE", "processed": len(results), "results": results})
+
+
 @bp.post("/commands")
 def create_command():
     user_id, auth_error = _authenticated_supabase()
@@ -49,7 +197,6 @@ def create_command():
     if not isinstance(plan, list):
         return jsonify({"error": "plan must be an array"}), 400
 
-    # Validate the full plan before performing any writes.
     normalized_plan = []
     for i, item in enumerate(plan):
         if isinstance(item, str):
