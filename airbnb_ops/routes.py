@@ -9,6 +9,7 @@ from flask import Blueprint, jsonify, render_template_string, request
 from .airbnb_ical import AirbnbICalAdapter
 from .pricing import recommend_rate
 from .service import AirbnbOpsService, Booking, Expense, PropertyConfig, money
+from .sqlite_store import SQLiteStore as PersistedSQLiteStore
 from .store import SQLiteStore
 from .sync import sync_channel
 
@@ -30,12 +31,13 @@ def _store() -> SQLiteStore:
 
 
 def _service() -> AirbnbOpsService:
-    service = AirbnbOpsService(_config())
-    store = _store()
-    for booking in store.bookings():
-        service.add_booking(booking)
-    for expense in store.expenses():
-        service.add_expense(expense)
+    # Prefer the persisted ledger/config when present. This keeps the command
+    # center consistent with the ledger used by the migration/test suite.
+    path = os.getenv("TIMEOE_AIRBNB_DB") or os.getenv("AIRBNB_DB_PATH") or "data/airbnb_ops.sqlite3"
+    persisted = PersistedSQLiteStore(path)
+    service = persisted.load_service()
+    if not service.config.property_name:
+        service = AirbnbOpsService(_config())
     return service
 
 
