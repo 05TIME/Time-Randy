@@ -9,10 +9,12 @@ bp = Blueprint("timeoe_api", __name__, url_prefix="/timeoe")
 
 def _supabase():
     from supabase import create_client
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    url = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
+    # Prefer the current Supabase secret key name, while retaining compatibility
+    # with the older service-role variable already used by deployed environments.
+    key = os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
-        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
+        raise RuntimeError("SUPABASE_URL and SUPABASE_SECRET_KEY are required")
     return create_client(url, key)
 
 
