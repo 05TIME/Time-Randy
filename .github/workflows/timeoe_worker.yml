@@ -1,0 +1,21 @@
+name: TIMEOE Revenue Worker
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger TIMEOE worker
+        env:
+          APP_URL: ${{ secrets.TIMEOE_APP_URL }}
+          WORKER_SECRET: ${{ secrets.TIMEOE_WORKER_SECRET }}
+        run: |
+          test -n "$APP_URL"
+          test -n "$WORKER_SECRET"
+          curl --fail-with-body -X POST "$APP_URL/timeoe/worker?limit=10" \
+            -H 'content-type: application/json' \
+            -H "x-timeoe-worker-secret: $WORKER_SECRET"
