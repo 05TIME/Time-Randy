@@ -25,7 +25,8 @@ def _config() -> PropertyConfig:
 
 
 def _store() -> SQLiteStore:
-    return SQLiteStore(os.getenv("TIMEOE_AIRBNB_DB", "data/airbnb_ops.sqlite3"))
+    path = os.getenv("TIMEOE_AIRBNB_DB") or os.getenv("AIRBNB_DB_PATH") or "data/airbnb_ops.sqlite3"
+    return SQLiteStore(path)
 
 
 def _service() -> AirbnbOpsService:
@@ -61,13 +62,11 @@ def summary_api():
 
 @bp.get("/config-status")
 def config_status():
-    """Safe runtime diagnostic; never returns the private calendar URL."""
     value = os.getenv("TIMEOE_AIRBNB_ICAL_URL")
     return jsonify({"airbnb_ical_configured": bool(value), "airbnb_ical_length": len(value) if value else 0, "runtime": "render"})
 
 
 def _sync_airbnb():
-    """Sync the listing from an Airbnb-exported iCal URL without exposing the URL."""
     calendar_url = os.getenv("TIMEOE_AIRBNB_ICAL_URL")
     if not calendar_url:
         return jsonify({"error": "TIMEOE_AIRBNB_ICAL_URL is not configured"}), 503
