@@ -1,3 +1,4 @@
+from calendar import monthrange
 from datetime import date
 from decimal import Decimal
 
@@ -17,8 +18,13 @@ def test_command_center_uses_persisted_ledger(tmp_path, monkeypatch):
             target_monthly_fixed_costs=Decimal("100000"),
         )
     )
-    store.save_booking(Booking("B1", date(2026, 8, 10), date(2026, 8, 13), Decimal("150000")))
-    store.save_expense(Expense("E1", "repair", Decimal("50000"), date(2026, 8, 11)))
+    today = date.today()
+    start = today.replace(day=1)
+    check_in = start.replace(day=10)
+    check_out = start.replace(day=13)
+    expense_date = start.replace(day=11)
+    store.save_booking(Booking("B1", check_in, check_out, Decimal("150000")))
+    store.save_expense(Expense("E1", "repair", Decimal("50000"), expense_date))
     monkeypatch.setenv("AIRBNB_DB_PATH", str(db_path))
     response = app.test_client().get("/airbnb/command-center")
     assert response.status_code == 200
@@ -29,7 +35,8 @@ def test_command_center_uses_persisted_ledger(tmp_path, monkeypatch):
     assert payload["outstanding_obligation"] == "900000"
     # Debt-clearing nights use the realized net operating contribution per booked night.
     assert payload["debt_clearing_nights"] == 7
-    assert payload["occupancy_percent"] == "0.09677419354838709677419354839"
+    expected_occupancy = str(Decimal("3") / Decimal(monthrange(today.year, today.month)[1]))
+    assert payload["occupancy_percent"] == expected_occupancy
 
 
 def test_live_state_falls_back_to_configured_rate_for_zero_or_negative_contribution(tmp_path):
